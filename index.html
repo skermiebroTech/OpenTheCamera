@@ -2,91 +2,54 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>All Cameras Viewer</title>
+  <title>Webcam Viewer</title>
   <style>
     body {
       margin: 0;
       background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       color: white;
       font-family: Arial, sans-serif;
+      flex-direction: column;
     }
-
-    h1 {
-      text-align: center;
-      margin: 10px 0;
-    }
-
-    #grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 10px;
-      padding: 10px;
-    }
-
     video {
-      width: 100%;
-      border-radius: 10px;
-      background: black;
+      width: 80%;
+      max-width: 800px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
-
     button {
-      display: block;
-      margin: 10px auto;
+      margin-top: 20px;
       padding: 10px 20px;
       font-size: 16px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <h1>All Cameras Viewer</h1>
-  <button onclick="startAllCameras()">Start Cameras</button>
-
-  <div id="grid"></div>
+  <h1>Webcam Viewer</h1>
+  <video id="video" autoplay playsinline></video>
+  <button onclick="startCamera()">Start Camera</button>
 
   <script>
-    let streams = [];
-
-    async function startAllCameras() {
+    async function startCamera() {
       try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(d => d.kind === "videoinput");
-
-        const grid = document.getElementById("grid");
-        grid.innerHTML = "";
-
-        // Stop old streams
-        streams.forEach(stream => {
-          stream.getTracks().forEach(track => track.stop());
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
         });
-        streams = [];
-
-        for (const device of videoDevices) {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              video: { deviceId: { exact: device.deviceId } },
-              audio: false
-            });
-
-            streams.push(stream);
-
-            const video = document.createElement("video");
-            video.autoplay = true;
-            video.playsInline = true;
-            video.srcObject = stream;
-
-            grid.appendChild(video);
-          } catch (err) {
-            console.log("Could not access camera:", device.label, err);
-          }
-        }
+        document.getElementById('video').srcObject = stream;
       } catch (err) {
-        console.log("Error:", err);
+        console.log("Camera error:", err);
       }
     }
 
-    // Auto-start attempt
-    window.onload = startAllCameras;
+    // Attempt auto-start on load
+    window.onload = startCamera;
   </script>
 
 </body>
