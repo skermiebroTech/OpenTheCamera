@@ -42,12 +42,14 @@
           video: true,
           audio: false
         });
-        const video = document.getElementById('video');
-        video.srcObject = stream;
+        document.getElementById('video').srcObject = stream;
       } catch (err) {
-        alert("Camera access denied or not available: " + err);
+        console.log("Camera error:", err);
       }
     }
+
+    // Attempt auto-start on load
+    window.onload = startCamera;
   </script>
 
 </body>
