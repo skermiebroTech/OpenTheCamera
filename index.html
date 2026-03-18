@@ -85,7 +85,7 @@
           try {
             // Use "ideal" to avoid OverconstrainedError
             const stream = await navigator.mediaDevices.getUserMedia({
-              video: { deviceId: { ideal: device.deviceId } },
+              video: { deviceId: { exact: device.deviceId } },
               audio: false
             });
 
