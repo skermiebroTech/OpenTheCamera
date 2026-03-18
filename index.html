@@ -2,95 +2,99 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  
+  <title>All Cameras Viewer</title>
   <title>Multi Camera Viewer</title>
     <!-- Open Graph metadata -->
   <meta property="og:title" content="All Cameras Viewer">
   <meta property="og:description" content="View all connected cameras in a simple web app.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://openthecamera.com/">
+  
   <style>
     body {
       margin: 0;
       background: #111;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       color: white;
       font-family: Arial, sans-serif;
-      flex-direction: column;
     }
-    video {
-      width: 80%;
-      max-width: 800px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+
+    h1 {
+      text-align: center;
+      margin: 10px 0;
     }
-    button, select {
-      margin-top: 15px;
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 10px;
       padding: 10px;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 10px;
+      background: black;
+    }
+
+    button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
       font-size: 16px;
     }
   </style>
 </head>
 <body>
 
-  <h1>Multi Camera Viewer</h1>
-  <video id="video" autoplay playsinline></video>
+  <h1>All Cameras Viewer</h1>
+  <button onclick="startAllCameras()">Start Cameras</button>
 
-  <select id="cameraSelect"></select>
-  <button onclick="startCamera()">Start Camera</button>
+  <div id="grid"></div>
 
   <script>
-    let currentStream = null;
+    let streams = [];
 
-    async function getCameras() {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(d => d.kind === "videoinput");
-
-      const select = document.getElementById("cameraSelect");
-      select.innerHTML = "";
-
-      videoDevices.forEach((device, index) => {
-        const option = document.createElement("option");
-        option.value = device.deviceId;
-        option.text = device.label || `Camera ${index + 1}`;
-        select.appendChild(option);
-      });
-    }
-
-    async function startCamera() {
+    async function startAllCameras() {
       try {
-        const deviceId = document.getElementById("cameraSelect").value;
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(d => d.kind === "videoinput");
 
-        if (currentStream) {
-          currentStream.getTracks().forEach(track => track.stop());
-        }
+        const grid = document.getElementById("grid");
+        grid.innerHTML = "";
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: deviceId ? { deviceId: { exact: deviceId } } : true,
-          audio: false
+        // Stop old streams
+        streams.forEach(stream => {
+          stream.getTracks().forEach(track => track.stop());
         });
+        streams = [];
 
-        currentStream = stream;
-        document.getElementById("video").srcObject = stream;
+        for (const device of videoDevices) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { exact: device.deviceId } },
+              audio: false
+            });
 
-        // Refresh labels after permission is granted
-        await getCameras();
+            streams.push(stream);
 
+            const video = document.createElement("video");
+            video.autoplay = true;
+            video.playsInline = true;
+            video.srcObject = stream;
+
+            grid.appendChild(video);
+          } catch (err) {
+            console.log("Could not access camera:", device.label, err);
+          }
+        }
       } catch (err) {
-        console.log("Camera error:", err);
+        console.log("Error:", err);
       }
     }
 
-    // Change camera when dropdown changes
-    document.getElementById("cameraSelect").addEventListener("change", startCamera);
-
-    // Initial setup
-    window.onload = async () => {
-      await getCameras();
-      startCamera();
-    };
+    // Auto-start attempt
+    window.onload = startAllCameras;
   </script>
 
 </body>
