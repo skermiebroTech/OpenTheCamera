@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Webcam Viewer</title>
+  <title>Multi Camera Viewer</title>
   <style>
     body {
       margin: 0;
@@ -21,35 +21,71 @@
       border-radius: 12px;
       box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
+    button, select {
+      margin-top: 15px;
+      padding: 10px;
       font-size: 16px;
-      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <h1>Webcam Viewer</h1>
+  <h1>Multi Camera Viewer</h1>
   <video id="video" autoplay playsinline></video>
+
+  <select id="cameraSelect"></select>
   <button onclick="startCamera()">Start Camera</button>
 
   <script>
+    let currentStream = null;
+
+    async function getCameras() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(d => d.kind === "videoinput");
+
+      const select = document.getElementById("cameraSelect");
+      select.innerHTML = "";
+
+      videoDevices.forEach((device, index) => {
+        const option = document.createElement("option");
+        option.value = device.deviceId;
+        option.text = device.label || `Camera ${index + 1}`;
+        select.appendChild(option);
+      });
+    }
+
     async function startCamera() {
       try {
+        const deviceId = document.getElementById("cameraSelect").value;
+
+        if (currentStream) {
+          currentStream.getTracks().forEach(track => track.stop());
+        }
+
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
+          video: deviceId ? { deviceId: { exact: deviceId } } : true,
           audio: false
         });
-        document.getElementById('video').srcObject = stream;
+
+        currentStream = stream;
+        document.getElementById("video").srcObject = stream;
+
+        // Refresh labels after permission is granted
+        await getCameras();
+
       } catch (err) {
         console.log("Camera error:", err);
       }
     }
 
-    // Attempt auto-start on load
-    window.onload = startCamera;
+    // Change camera when dropdown changes
+    document.getElementById("cameraSelect").addEventListener("change", startCamera);
+
+    // Initial setup
+    window.onload = async () => {
+      await getCameras();
+      startCamera();
+    };
   </script>
 
 </body>
