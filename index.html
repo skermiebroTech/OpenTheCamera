@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -6,19 +7,13 @@
     body {
       margin: 0;
       background: #111;
-
-
-
-
       color: white;
       font-family: Arial, sans-serif;
-
     }
 
     h1 {
       text-align: center;
       margin: 10px 0;
-
     }
 
     #grid {
@@ -49,33 +44,16 @@
 
   <div id="grid"></div>
 
-
   <script>
     let streams = [];
 
     async function startAllCameras() {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(d => d.kind === "videoinput");
 
         const grid = document.getElementById("grid");
         grid.innerHTML = "";
-
 
         // Stop old streams
         streams.forEach(stream => {
@@ -91,7 +69,6 @@
             });
 
             streams.push(stream);
-
 
             const video = document.createElement("video");
             video.autoplay = true;
@@ -110,12 +87,7 @@
 
     // Auto-start attempt
     window.onload = startAllCameras;
-
-
-
-
-
-
   </script>
 
 </body>
+</html>
