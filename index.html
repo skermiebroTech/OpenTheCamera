@@ -1,107 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>All Cameras Viewer</title>
+  <meta charset="UTF-8">
+  <title>All Cameras Viewer</title>
 
-<!-- Open Graph metadata -->
-<meta property="og:title" content="All Cameras Viewer">
-<meta property="og:description" content="View all connected cameras in a simple web app.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://openthecamera.com/">
+  <!-- Open Graph metadata for social embeds -->
+  <meta property="og:title" content="All Cameras Viewer">
+  <meta property="og:description" content="View all connected cameras in a simple web app.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://openthecamera.com/">
+  <!-- Optional: add an image -->
+  <!-- <meta property="og:image" content="https://openthecamera.com/preview.png"> -->
 
-<style>
-  body { margin:0; background:#111; color:white; font-family:Arial,sans-serif; }
-  h1 { text-align:center; margin:10px 0; }
-  #grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:10px; padding:10px; }
-  video { width:100%; border-radius:10px; background:black; }
-  button { display:block; margin:10px auto; padding:10px 20px; font-size:16px; cursor:pointer; }
-  #githubLink {
-    position:fixed; bottom:10px; right:10px; display:flex; align-items:center; gap:8px;
-    background:#000; padding:8px 12px; border-radius:10px; color:white; text-decoration:none;
-    font-size:14px; opacity:0.8; transition:0.2s;
-  }
-  #githubLink:hover { opacity:1; }
-  #githubLink img { width:20px; height:20px; filter:invert(1); }
-</style>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    /* Grid for multiple cameras */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 10px;
+      padding: 10px;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 10px;
+      background: black;
+    }
+
+    button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* GitHub link styling */
+    #githubLink {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #000;
+      padding: 8px 12px;
+      border-radius: 10px;
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      opacity: 0.8;
+      transition: 0.2s;
+    }
+
+    #githubLink:hover {
+      opacity: 1;
+    }
+
+    #githubLink img {
+      width: 20px;
+      height: 20px;
+      filter: invert(1);
+    }
+  </style>
 </head>
 
 <body>
 
-<h1>All Cameras Viewer</h1>
+  <h1>All Cameras Viewer</h1>
+  <button onclick="startAllCameras()">Start Cameras</button>
 
-<!-- Overlay prompting user to click for permission -->
-<div id="overlay" style="
-  position:fixed; inset:0; background:rgba(0,0,0,0.7);
-  color:white; font-size:24px; display:flex; justify-content:center; align-items:center;
-  cursor:pointer; z-index:10;
-">
-Click anywhere to start cameras
-</div>
+  <div id="grid"></div>
 
-<div id="grid"></div>
+  <!-- GitHub link -->
+  <a href="https://github.com/skermiebroTech/OpenTheCamera" target="_blank" id="githubLink">
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub">
+    View on GitHub
+  </a>
 
-<a href="https://github.com/skermiebroTech/OpenTheCamera" target="_blank" id="githubLink">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub">
-  View on GitHub
-</a>
+  <script>
+    let streams = [];
 
-<script>
-let streams = [];
-
-async function startAllCameras() {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const videoDevices = devices.filter(d => d.kind === "videoinput");
-
-    const grid = document.getElementById("grid");
-    grid.innerHTML = "";
-
-    // Stop old streams
-    streams.forEach(s => s.getTracks().forEach(t => t.stop()));
-    streams = [];
-
-    for (const device of videoDevices) {
+    async function startAllCameras() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { deviceId: { exact: device.deviceId }, width:640, height:480 },
-          audio:false
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(d => d.kind === "videoinput");
+
+        const grid = document.getElementById("grid");
+        grid.innerHTML = "";
+
+        // Stop old streams
+        streams.forEach(stream => {
+          stream.getTracks().forEach(track => track.stop());
         });
+        streams = [];
 
-        streams.push(stream);
+        for (const device of videoDevices) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { exact: device.deviceId }, width: 640, height: 480 },
+              audio: false
+            });
 
-        const video = document.createElement("video");
-        video.autoplay = true;
-        video.playsInline = true;
-        video.srcObject = stream;
+            streams.push(stream);
 
-        const container = document.createElement("div");
-        container.appendChild(video);
+            const video = document.createElement("video");
+            video.autoplay = true;
+            video.playsInline = true;
+            video.srcObject = stream;
 
-        const label = document.createElement("div");
-        label.style.textAlign = "center";
-        label.style.marginTop = "4px";
-        label.innerText = device.label || "Camera";
-        container.appendChild(label);
+            const container = document.createElement("div");
+            container.appendChild(video);
 
-        grid.appendChild(container);
+            // Optional: show camera label
+            const label = document.createElement("div");
+            label.style.textAlign = "center";
+            label.style.marginTop = "4px";
+            label.innerText = device.label || "Camera";
+            container.appendChild(label);
 
-      } catch(err) {
-        console.log("Cannot access camera:", device.label, err);
+            grid.appendChild(container);
+          } catch (err) {
+            console.log("Could not access camera:", device.label, err);
+          }
+        }
+      } catch (err) {
+        console.log("Error accessing devices:", err);
       }
     }
 
-    // Hide overlay after permission granted
-    document.getElementById("overlay").style.display = "none";
-  } catch(err) {
-    console.log("Error accessing devices:", err);
-  }
-}
-
-// Trigger camera start on any user interaction
-document.getElementById("overlay").addEventListener("click", startAllCameras);
-document.getElementById("overlay").addEventListener("touchstart", startAllCameras);
-</script>
+    // Auto-start on page load
+    window.onload = startAllCameras;
+  </script>
 
 </body>
 </html>
