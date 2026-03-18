@@ -2,15 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  
   <title>All Cameras Viewer</title>
-  <title>Multi Camera Viewer</title>
-    <!-- Open Graph metadata -->
+
+  <!-- Open Graph metadata -->
   <meta property="og:title" content="All Cameras Viewer">
   <meta property="og:description" content="View all connected cameras in a simple web app.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://openthecamera.com/">
-  
+
+  <!-- GitHub link -->
+  <link rel="canonical" href="https://github.com/yourusername/all-cameras-viewer">
+
   <style>
     body {
       margin: 0;
@@ -42,12 +44,21 @@
       margin: 10px auto;
       padding: 10px 20px;
       font-size: 16px;
+      cursor: pointer;
+    }
+
+    .note {
+      text-align: center;
+      font-size: 14px;
+      color: #aaa;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
 
   <h1>All Cameras Viewer</h1>
+  <div class="note">Click "Start Cameras" to grant camera access</div>
   <button onclick="startAllCameras()">Start Cameras</button>
 
   <div id="grid"></div>
@@ -57,6 +68,9 @@
 
     async function startAllCameras() {
       try {
+        // Request any camera once to get permission
+        await navigator.mediaDevices.getUserMedia({ video: true });
+
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(d => d.kind === "videoinput");
 
@@ -64,15 +78,14 @@
         grid.innerHTML = "";
 
         // Stop old streams
-        streams.forEach(stream => {
-          stream.getTracks().forEach(track => track.stop());
-        });
+        streams.forEach(stream => stream.getTracks().forEach(track => track.stop()));
         streams = [];
 
         for (const device of videoDevices) {
           try {
+            // Use "ideal" to avoid OverconstrainedError
             const stream = await navigator.mediaDevices.getUserMedia({
-              video: { deviceId: { exact: device.deviceId } },
+              video: { deviceId: { ideal: device.deviceId } },
               audio: false
             });
 
@@ -85,16 +98,15 @@
 
             grid.appendChild(video);
           } catch (err) {
-            console.log("Could not access camera:", device.label, err);
+            console.log("Could not access camera:", device.label || "Unknown", err);
           }
         }
+
       } catch (err) {
-        console.log("Error:", err);
+        console.log("Error accessing cameras:", err);
+        alert("Camera access denied or no cameras found.");
       }
     }
-
-    // Auto-start attempt
-    window.onload = startAllCameras;
   </script>
 
 </body>
